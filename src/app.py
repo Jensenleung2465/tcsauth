@@ -12,7 +12,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE,
-                password TEXT,
+                password TEXT NOT NULL,
                 id_code TEXT UNIQUE
             )
         ''')
@@ -31,51 +31,53 @@ def login_v1():
         cursor.execute('SELECT * FROM users WHERE username=? AND password=?', (username, password))
         user = cursor.fetchone()
         
-    if user:
-        return "done"
-    return "no"
+    return "true" if user else "false"
 
 @app.route('/signup', methods=['GET'])
 def signup_v1():
     username = request.args.get('username')  # Use request.args for GET
     password = request.args.get('password')
     
+    if username is None or password is None:
+        return "false"
+
     try:
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
             conn.commit()
-        return "done"
+        return "true"
     except sqlite3.IntegrityError:
-        return "no"
+        return "false"
 
-# Version 2: ID Code
-@app.route('/login/idcode', methods=['POST'])
+# Version 2: ID Code (using GET)
+@app.route('/login/idcode', methods=['GET'])
 def login_v2():
-    id_code = request.json.get('idcode')
+    id_code = request.args.get('idcode')  # Use request.args for GET
     
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM users WHERE id_code=?', (id_code,))
         user = cursor.fetchone()
         
-    if user:
-        return jsonify({'success': True, 'message': 'Login successful!'})
-    return jsonify({'success': False, 'message': 'Invalid ID code.'})
+    return "true" if user else "false"
 
-@app.route('/signup/idcode', methods=['POST'])
+@app.route('/signup/idcode', methods=['GET'])
 def signup_v2():
-    id_code = request.json.get('idcode')
-    username = request.json.get('username')
+    id_code = request.args.get('idcode')  # Use request.args for GET
+    username = request.args.get('username')
     
+    if username is None or id_code is None:
+        return "false"
+
     try:
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (username, id_code) VALUES (?, ?)', (username, id_code))
             conn.commit()
-        return jsonify({'success': True, 'message': 'Signup successful!'})
+        return "true"
     except sqlite3.IntegrityError:
-        return jsonify({'success': False, 'message': 'ID code or username already exists.'})
+        return "false"
 
 if __name__ == '__main__':
     app.run(debug=True, port=6969, host="0.0.0.0")
