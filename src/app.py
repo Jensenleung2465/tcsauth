@@ -21,10 +21,10 @@ def init_db():
 init_db()
 
 # Version 1: Username and Password
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET'])
 def login_v1():
-    username = request.json.get('username')
-    password = request.json.get('password')
+    username = request.args.get('username')  # Use request.args for GET
+    password = request.args.get('password')
     
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
@@ -32,22 +32,22 @@ def login_v1():
         user = cursor.fetchone()
         
     if user:
-        return jsonify({'success': True, 'message': 'Login successful!'})
-    return jsonify({'success': False, 'message': 'Invalid credentials.'})
+        return "done"
+    return "no"
 
-@app.route('/signup', methods=['POST'])
+@app.route('/signup', methods=['GET'])
 def signup_v1():
-    username = request.json.get('username')
-    password = request.json.get('password')
+    username = request.args.get('username')  # Use request.args for GET
+    password = request.args.get('password')
     
     try:
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
             conn.commit()
-        return jsonify({'success': True, 'message': 'Signup successful!'})
+        return "done"
     except sqlite3.IntegrityError:
-        return jsonify({'success': False, 'message': 'Username already exists.'})
+        return "no"
 
 # Version 2: ID Code
 @app.route('/login/idcode', methods=['POST'])
